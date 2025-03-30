@@ -39,6 +39,7 @@ jobs:
     - name: DOCKER | Run and Test
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+        DOCKER_NETWORK: local_network
       run: |
         # Create network
         echo Create Bridge Network
