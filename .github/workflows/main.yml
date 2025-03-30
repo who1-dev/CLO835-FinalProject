@@ -1,36 +1,87 @@
-# This is a basic workflow to help you get started with Actions
-
-name: CI
-
-# Controls when the workflow will run
-on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
+name: Deploy to ECR
+on: 
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches: [ dev ]
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
   build:
-    # The type of runner that the job will run on
+    name: Automated Deployment to AWS ECR
     runs-on: ubuntu-latest
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
+      AWS_REGION: us-east-1
+      S3_BUCKET: ${{ secrets.S3_BUCKET }}
+      ECR_APP_REPOSITORY: clo835-jcaranay-assignment1-app-repo
+      ECR_DB_REPOSITORY: clo835-jcaranay-assignment1-db-repo
+      IMAGE_TAG: v1.0
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+    - name: GIT | Check out code
+      uses: actions/checkout@v4
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
+    - name: AWS | ECR Login
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
 
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+
+    - name: DOCKER | Build
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      run: |
+        echo Build Database
+        docker build -t $ECR_REGISTRY/$ECR_DB_REPOSITORY:$IMAGE_TAG -f Dockerfile_mysql . 
+
+        echo Build Application
+        docker build -t $ECR_REGISTRY/$ECR_APP_REPOSITORY:$IMAGE_TAG -f Dockerfile .
+
+    - name: DOCKER | Run and Test
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      run: |
+        # Create network
+        echo Create Bridge Network
+        docker network create -d bridge --subnet 192.168.100.0/24 --gateway 192.168.100.1 $DOCKER_NETWORK
+
+        # Spawn containers
+        # Spawn Database container and store container ID
+        # Run the Docker container and capture the container ID in the variable DBCONID
+        echo Run Database
+        DBCONID=$(docker run -d -e MYSQL_ROOT_PASSWORD="${{ secrets.DBPWD }}" --network "${DOCKER_NETWORK}" --name db_container $ECR_REGISTRY/$ECR_DB_REPOSITORY:$IMAGE_TAG)
+
+        # Get DB IPAddress
+        DBHOST=$(docker inspect -f {{'.NetworkSettings.Networks.local_network.IPAddress'}} $DBCONID)
+       
+        sleep 10
+        # Run application container
+        echo Run Application
+        docker run -d -p 81:81 \
+        -e AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID \
+        -e AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY \
+        -e AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN \
+        -e S3_BUCKET=$S3_BUCKET \
+        -e DBHOST=$DBHOST \
+        -e DBUSER=${{ secrets.DBUSER }} \
+        -e DBPWD=${{ secrets.DBPWD }} \
+        -e DBPORT=${{ secrets.DBPORT }} \
+        --network "${DOCKER_NETWORK}" --name app_container $ECR_REGISTRY/$ECR_APP_REPOSITORY:$IMAGE_TAG
+ 
+        # Unit test
+        docker ps
+        echo "Pause for 10 seconds to let container start"
+        sleep 10
+
+        if curl localhost:81 -vvv; then
+          echo "Application is running. Proceeding to push images."
+        else
+          echo "Failed to connect to application. Exiting."
+          exit 1
+        fi
+
+    - name: DOCKER | Push
+      env:
+        ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      run: |
+        docker push $ECR_REGISTRY/$ECR_DB_REPOSITORY:$IMAGE_TAG
+        docker push $ECR_REGISTRY/$ECR_APP_REPOSITORY:$IMAGE_TAG
