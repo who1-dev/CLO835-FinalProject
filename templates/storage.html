@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>CLO835 | Final Project - JCaranay</title>
+      <!-- Bootstrap CSS -->
+      <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+      <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+  </head>
+  <body>
+    <div class="content container mt-4">
+        <h3> <a href="/">Home </a></h3>
+        
+        <div class="mt-4">
+          <h3>Upload your file here:</h3>
+          <form method="POST" action="/upload" enctype="multipart/form-data">
+            <input type="file" name="file" class="form-control mb-2" required>
+            <input type="submit" value="Upload" class="btn btn-primary">
+          </form>
+        </div>
+        
+        <div class="mt-4">
+          <h3>These are your uploaded files:</h3>
+          <p>Click on the filename to download it.</p>
+
+          <div class="image-list">
+            {% for item in contents %}
+              <div class="image-item">
+                <label>{{ item.Key }}</label>
+                <img src="{{ url_for('proxy_image', key=item.Key) }}" alt="Uploaded Image" style="width: 30%">
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

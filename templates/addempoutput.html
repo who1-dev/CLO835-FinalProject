@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<style>
+		body {
+            background-image: url({{ url_for('proxy_image', key=BACKGROUND_IMAGE) }}); /* URL of your image */
+            background-size: cover; /* Ensures the image covers the entire screen */
+            background-repeat: no-repeat; /* Prevents the image from repeating */
+            background-attachment: fixed; /* Keeps the image fixed during scrolling */
+        }
+	</style>
+
+<center>
+	<font color="DodgerBlue" size="5" style="font-family: avenir">
+		<body style="background: {{ color }};">
+			<h1>The employee {{ name }} wassuccessfully added to the database</h1><br>
+			<h2>The Employee has been added to the database</h2><br>
+			<h2>{{ name }}</h2><br>
+			<title>Add Emp Output</title>
+			<a href="{{ url_for('home') }}">Back</a>
+		</body>
+	</font>
+</center>
+</head>
+<body>
+
+</body>
+</html>

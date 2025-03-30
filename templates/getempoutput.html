@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Employee Information</title>
+	<style>
+		body {
+            background-image: url({{ url_for('proxy_image', key=BACKGROUND_IMAGE) }}); /* URL of your image */
+            background-size: cover; /* Ensures the image covers the entire screen */
+            background-repeat: no-repeat; /* Prevents the image from repeating */
+            background-attachment: fixed; /* Keeps the image fixed during scrolling */
+        }
+	</style>
+</head>
+<center>
+	<font color="black" size="5" style="font-family: avenir">
+
+		<h1 style="color: DodgerBlue">Employee Information</h1>
+
+		<body style="background: {{ color }};">
+
+			<form>
+
+				<div>
+
+			  		Employee ID:<br> {{ id }} <br><br>
+
+			  		First Name:<br> {{ fname }} <br><br>
+
+			  		Last Name:<br> {{ lname }} <br><br>
+
+			  		Primary Interest:<br> {{ interest }} <br><br>
+
+			  		Location:<br> {{ location }} <br><br>
+			  		
+			  	</div>
+
+			</form>
+			<a href="{{ url_for('home') }}">Back</a>
+		</body>
+
+	</font>
+</center>
+</html>
