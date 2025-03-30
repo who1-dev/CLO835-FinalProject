@@ -1,11 +1,20 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, send_file
+from s3 import get_background_image, list_files, download_file, upload_file
 from pymysql import connections
 import os
 import random
 import argparse
+import boto3
+from io import BytesIO
 
 
 app = Flask(__name__)
+
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID') or ""
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY') or ""
+AWS_SESSION_TOKEN = os.environ.get('AWS_SESSION_TOKEN') or ""
+S3_BUCKET = os.environ.get("S3_BUCKET") or "background-s3-jcaranay"
+UPLOAD_FOLDER = "uploads"
 
 DBHOST = os.environ.get("DBHOST") or "localhost"
 DBUSER = os.environ.get("DBUSER") or "root"
@@ -14,17 +23,19 @@ DATABASE = os.environ.get("DATABASE") or "employees"
 COLOR_FROM_ENV = os.environ.get('APP_COLOR') or "lime"
 DBPORT = int(os.environ.get("DBPORT"))
 
+
+
 # Create a connection to the MySQL database
 db_conn = connections.Connection(
     host= DBHOST,
     port=DBPORT,
     user= DBUSER,
     password= DBPWD, 
-    db= DATABASE
-    
+    db= DATABASE  
 )
+
 output = {}
-table = 'employee';
+table = 'employee'
 
 # Define the supported color codes
 color_codes = {
@@ -43,11 +54,12 @@ SUPPORTED_COLORS = ",".join(color_codes.keys())
 
 # Generate a random color
 COLOR = random.choice(["red", "green", "blue", "blue2", "darkblue", "pink", "lime"])
+BACKGROUND_IMAGE = ""
 
 
 @app.route("/", methods=['GET', 'POST'])
 def home():
-    return render_template('addemp.html', color=color_codes[COLOR])
+    return render_template('addemp.html', BACKGROUND_IMAGE=get_background_image())
 
 @app.route("/about", methods=['GET','POST'])
 def about():
@@ -109,6 +121,41 @@ def FetchData():
 
     return render_template("getempoutput.html", id=output["emp_id"], fname=output["first_name"],
                            lname=output["last_name"], interest=output["primary_skills"], location=output["location"], color=color_codes[COLOR])
+
+
+@app.route("/storage")
+def storage():
+    contents = list_files() or []
+    return render_template('storage.html', contents=contents)
+
+@app.route("/upload", methods=['POST'])
+def upload():
+    if request.method == "POST":
+        f = request.files['file']
+        f.save(os.path.join(UPLOAD_FOLDER, f.filename))
+        upload_file(f"uploads/{f.filename}")
+
+        return redirect("/storage")
+
+@app.route("/download/<filename>", methods=['GET'])
+def download(filename):
+    if request.method == 'GET':
+        output = download_file(filename)
+
+        return send_file(output, as_attachment=True)
+
+
+@app.route('/proxy-image/<path:key>')
+def proxy_image(key):
+    s3 = boto3.client('s3',
+                      aws_access_key_id=AWS_ACCESS_KEY_ID,
+                      aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+                      aws_session_token=AWS_SESSION_TOKEN) 
+    file_obj = BytesIO()
+    s3.download_fileobj(S3_BUCKET, key, file_obj)
+    file_obj.seek(0)
+    return send_file(file_obj, mimetype='image/jpeg')  # Adjust mimetype as needed
+
 
 if __name__ == '__main__':
     

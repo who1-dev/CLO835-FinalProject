@@ -1,5 +1,15 @@
 <!doctype html>
 <title>Hello from Flask</title>
+<head>
+	<style>
+		body {
+            background-image: url({{ url_for('proxy_image', key=BACKGROUND_IMAGE) }}); /* URL of your image */
+            background-size: cover; /* Ensures the image covers the entire screen */
+            background-repeat: no-repeat; /* Prevents the image from repeating */
+            background-attachment: fixed; /* Keeps the image fixed during scrolling */
+        }
+	</style>
+</head>
 <body style="background: {{ color }};"></body>
 <div style="color: #e4e4e4;
     text-align:  center;
