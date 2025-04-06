@@ -2,12 +2,10 @@ import boto3
 import random
 import os
 
-
 S3_BUCKET = os.environ.get("S3_BUCKET") or "background-s3-jcaranay"
-BG = os.environ.get("BG") or ""
 
 def get_background_image():
-    global BG
+    BG = os.environ.get("BG") or ""
     if BG == "":
         contents = list_files() or []
         bimage = random.choice(contents)

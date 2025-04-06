@@ -13,7 +13,11 @@ app = Flask(__name__)
 AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID') or ""
 AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY') or ""
 AWS_SESSION_TOKEN = os.environ.get('AWS_SESSION_TOKEN') or ""
-S3_BUCKET = os.environ.get("S3_BUCKET") or "background-s3-jcaranay"
+
+S3_BUCKET = os.environ.get("S3_BUCKET")
+QOUTE = os.environ.get("QOUTE") or ""
+QOUTEDBY = os.environ.get("QOUTEDBY") or ""
+TITLE = os.environ.get("TITLE") or ""
 UPLOAD_FOLDER = "uploads"
 
 DBHOST = os.environ.get("DBHOST") or "localhost"
@@ -58,11 +62,11 @@ BACKGROUND_IMAGE = ""
 
 @app.route("/", methods=['GET', 'POST'])
 def home():
-    return render_template('addemp.html', BACKGROUND_IMAGE=get_background_image())
+    return render_template('addemp.html', BACKGROUND_IMAGE=get_background_image(), QOUTE=QOUTE, QOUTEDBY=QOUTEDBY, TITLE=TITLE )
 
 @app.route("/about", methods=['GET','POST'])
 def about():
-    return render_template('about.html', color=color_codes[COLOR])
+    return render_template('about.html', BACKGROUND_IMAGE=get_background_image())
     
 @app.route("/addemp", methods=['POST'])
 def AddEmp():
@@ -86,11 +90,11 @@ def AddEmp():
         cursor.close()
 
     print("all modification done...")
-    return render_template('addempoutput.html', name=emp_name, color=color_codes[COLOR])
+    return render_template('addempoutput.html', name=emp_name, BACKGROUND_IMAGE=get_background_image())
 
 @app.route("/getemp", methods=['GET', 'POST'])
 def GetEmp():
-    return render_template("getemp.html", color=color_codes[COLOR])
+    return render_template("getemp.html", BACKGROUND_IMAGE=get_background_image())
 
 
 @app.route("/fetchdata", methods=['GET','POST'])
@@ -119,13 +123,13 @@ def FetchData():
         cursor.close()
 
     return render_template("getempoutput.html", id=output["emp_id"], fname=output["first_name"],
-                           lname=output["last_name"], interest=output["primary_skills"], location=output["location"], color=color_codes[COLOR])
+                           lname=output["last_name"], interest=output["primary_skills"], location=output["location"], BACKGROUND_IMAGE=get_background_image())
 
 
 @app.route("/storage")
 def storage():
     contents = list_files() or []
-    return render_template('storage.html', contents=contents)
+    return render_template('storage.html', contents=contents, TITLE=TITLE)
 
 @app.route("/upload", methods=['POST'])
 def upload():

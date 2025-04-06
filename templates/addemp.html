@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Add Employee Information</title>
+	<title>{{TITLE}}</title>
 	<style>
 		body {
             background-image: url({{ url_for('proxy_image', key=BACKGROUND_IMAGE) }}); /* URL of your image */
@@ -35,6 +35,10 @@
 		  		<button type="submit" formaction="/getemp" style="background: grey; height: 45px; width: 200px; color:white; font:oblique;">GET EMPLOYEE INFORMATION</button><br><br>
 
 			</form>
+			<br><br>
+			<h2> "{{QOUTE}}" <br/> {{QOUTEDBY}} </h2>
+
+				
 			<br><br><br><br><br><br><br><br>
             <a href="/about">About Us</a>
 			<a href="/storage">Image Management</a>
